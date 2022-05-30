@@ -13,6 +13,9 @@ class DotEnv(NamedTuple):
     WEBSITE_DOMAIN: str
     CONNECTION_URI: str
     API_KEY: str
+    MONGO_URI: str
+    MONGO_DB_NAME: str
+    NEWSSCRAPER_API_URL: str
 
 
 dot_env = DotEnv(
@@ -21,6 +24,9 @@ dot_env = DotEnv(
     os.getenv("WEBSITE_DOMAIN"),
     os.getenv("CONNECTION_URI"),
     os.getenv("API_KEY"),
+    os.getenv("MONGO_URI"),
+    os.getenv("MONGO_DB_NAME"),
+    os.getenv("NEWSSCRAPER_API_URL"),
 )
 
 
