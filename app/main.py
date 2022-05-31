@@ -13,6 +13,8 @@ from supertokens_python.recipe.session.framework.fastapi import verify_session
 from app.schemas import (
     CreateBookmarkModel,
     DeleteBookmarkModel,
+    GetBookmarkCheckRequestModel,
+    GetBookmarkCheckResponseModel,
     GetBookmarkModel,
     GetBookmarkModelPaginated,
 )
@@ -139,3 +141,21 @@ async def delete_bookmark(
 
     await coll.delete_one({"_id": bookmark["_id"]})
     return
+
+
+@f_app.post("/bookmark/check", response_model=GetBookmarkCheckResponseModel)
+async def check_if_bookmarked(
+    req_data: GetBookmarkCheckRequestModel,
+    session: SessionContainer = Depends(verify_session()),
+):
+    if not await article_exists(req_data.article_id):
+        raise HTTPException(
+            status_code=404,
+            detail=f"Article with id {req_data.article_id!r} not found",
+        )
+
+    user_id = session.get_user_id()
+
+    check = await coll.find_one({"user_id": user_id, "article_id": req_data.article_id})
+
+    return GetBookmarkCheckResponseModel(is_bookmarked=bool(check))
