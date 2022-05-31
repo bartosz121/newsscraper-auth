@@ -29,7 +29,7 @@ async def article_exists(article_id: str) -> bool:
 
 
 async def make_request(url: str) -> httpx.Response:
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=httpx.Timeout(20.0, connect=60.0)) as client:
         response = await client.get(url)
 
     return response
