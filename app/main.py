@@ -118,17 +118,16 @@ async def delete_bookmark(
     delete_model: DeleteBookmarkModel,
     session: SessionContainer = Depends(verify_session()),
 ):
-    if not validate_objectid(delete_model.document_id):
-        raise HTTPException(status_code=400, detail="Invalid document id")
-
-    bson_id = ObjectId(delete_model.document_id)
-    bookmark = await coll.find_one({"_id": bson_id})
+    user_id = session.get_user_id()
+    bookmark = await coll.find_one(
+        {"user_id": user_id, "article_id": delete_model.article_id}
+    )
 
     if not bookmark:
         raise HTTPException(
             status_code=404,
-            detail=f"Bookmark with id {delete_model.document_id!r} not found",
+            detail=f"Bookmark not found",
         )
 
-    await coll.delete_one({"_id": bson_id})
+    await coll.delete_one({"_id": bookmark["_id"]})
     return
