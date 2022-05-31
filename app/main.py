@@ -1,5 +1,5 @@
 import motor.motor_asyncio
-from bson import ObjectId
+from datetime import datetime
 from fastapi import FastAPI, Depends, status, HTTPException
 from starlette.responses import Response
 from starlette.middleware.cors import CORSMiddleware
@@ -18,7 +18,7 @@ from app.schemas import (
 )
 
 from app.supertokens_config import dot_env, app_info, supertokens_config
-from app.utils import article_exists, validate_objectid
+from app.utils import article_exists, fetch_user_bookmarks, validate_objectid
 
 
 # Supertokens
@@ -64,11 +64,18 @@ async def show_bookmarks(
     offset = (page - 1) * page_size
 
     user_bookmarks = (
-        await coll.find({"user_id": user_id}).skip(offset).to_list(page_size)
+        await coll.find({"user_id": user_id})
+        .sort("created", -1)
+        .skip(offset)
+        .to_list(page_size)
+    )
+
+    articles = await fetch_user_bookmarks(
+        tuple(bookmark["article_id"] for bookmark in user_bookmarks)
     )
 
     data = {
-        "result": user_bookmarks,
+        "result": articles,
         "hasNext": (offset + page_size) < item_count,
         "pageNumber": page,
     }
@@ -104,6 +111,7 @@ async def add_bookmark(
         {
             "article_id": article_info.article_id,
             "user_id": user_id,
+            "created": datetime.utcnow(),
         }
     )
     created_bookmark = await coll.find_one({"_id": new_bookmark.inserted_id})
