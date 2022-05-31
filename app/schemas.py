@@ -46,3 +46,11 @@ class CreateBookmarkModel(BaseModel):
 
 class DeleteBookmarkModel(BaseModel):
     article_id: str
+
+
+class GetBookmarkCheckRequestModel(BaseModel):
+    article_id: str
+
+
+class GetBookmarkCheckResponseModel(BaseModel):
+    is_bookmarked: bool
