@@ -32,4 +32,4 @@ class CreateBookmarkModel(BaseModel):
 
 
 class DeleteBookmarkModel(BaseModel):
-    document_id: str
+    article_id: str
