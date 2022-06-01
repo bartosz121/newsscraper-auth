@@ -124,7 +124,6 @@ async def change_email(
     status = await update_email_or_password(user_id, email=data.new_email)
 
     if status.is_ok:
-        await session.revoke_session()
         return ChangeEmailResponseModel(msg="ok")
 
     if status.is_email_already_exists_error:
