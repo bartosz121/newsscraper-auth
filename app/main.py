@@ -9,8 +9,18 @@ from supertokens_python.framework.fastapi import get_middleware
 from supertokens_python.recipe import emailpassword, session
 from supertokens_python.recipe.session import SessionContainer
 from supertokens_python.recipe.session.framework.fastapi import verify_session
+from supertokens_python.recipe.emailpassword.asyncio import (
+    get_user_by_id,
+    sign_in,
+    update_email_or_password,
+)
+from supertokens_python.recipe.emailpassword.interfaces import (
+    SignInWrongCredentialsErrorResult,
+)
 
 from app.schemas import (
+    ChangePasswordRequestModel,
+    ChangePasswordResponseModel,
     CreateBookmarkModel,
     DeleteBookmarkModel,
     GetBookmarkCheckRequestModel,
@@ -53,6 +63,37 @@ app = CORSMiddleware(
 client = motor.motor_asyncio.AsyncIOMotorClient(dot_env.MONGO_URI)
 db = client[dot_env.MONGO_DB_NAME]
 coll = db["bookmarks"]
+
+# Change password
+@f_app.post("/change_password", response_model=ChangePasswordResponseModel)
+async def change_password(
+    data: ChangePasswordRequestModel,
+    session: SessionContainer = Depends(verify_session()),
+):
+    print(data)
+    user_id = session.get_user_id()
+    users_info = await get_user_by_id(user_id)
+
+    if users_info is None:
+        raise HTTPException(status_code=500, detail=f"User info not found. Try again")
+
+    # check if old password is correct
+    is_password_valid = await sign_in(users_info.email, data.old_password)
+
+    if data.old_password == data.new_password:
+        raise HTTPException(
+            status_code=500,
+            detail=f"New password cannot be the same as your old password",
+        )
+
+    if isinstance(is_password_valid, SignInWrongCredentialsErrorResult):
+        raise HTTPException(status_code=500, detail=f"Wrong old password")
+
+    status = await update_email_or_password(user_id, password=data.new_password)
+    await session.revoke_session()
+
+    return ChangePasswordResponseModel(msg="ok")
+
 
 # Bookmark post
 @f_app.get("/bookmark", response_model=GetBookmarkModelPaginated)
