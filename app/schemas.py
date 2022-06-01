@@ -54,3 +54,12 @@ class GetBookmarkCheckRequestModel(BaseModel):
 
 class GetBookmarkCheckResponseModel(BaseModel):
     is_bookmarked: bool
+
+
+class ChangePasswordRequestModel(BaseModel):
+    old_password: str
+    new_password: str
+
+
+class ChangePasswordResponseModel(BaseModel):
+    msg: str
