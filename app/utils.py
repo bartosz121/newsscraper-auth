@@ -4,6 +4,11 @@ from typing import Sequence
 import httpx
 from bson import ObjectId
 from bson import errors as bson_errors
+from supertokens_python.recipe.emailpassword.asyncio import sign_in
+from supertokens_python.recipe.emailpassword.interfaces import (
+    SignInWrongCredentialsErrorResult,
+)
+
 
 from app.supertokens_config import dot_env
 from app.schemas import Article
@@ -55,3 +60,8 @@ async def fetch_user_bookmarks(ids: Sequence[str]):
     articles = await asyncio.gather(*awaitables)
 
     return articles
+
+
+async def is_user_password_valid(email: str, password: str) -> bool:
+    is_password_valid = await sign_in(email, password)
+    return not isinstance(is_password_valid, SignInWrongCredentialsErrorResult)
