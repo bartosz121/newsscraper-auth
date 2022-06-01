@@ -63,3 +63,12 @@ class ChangePasswordRequestModel(BaseModel):
 
 class ChangePasswordResponseModel(BaseModel):
     msg: str
+
+
+class ChangeEmailRequestModel(BaseModel):
+    new_email: str
+    password: str
+
+
+class ChangeEmailResponseModel(BaseModel):
+    msg: str
