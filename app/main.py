@@ -32,7 +32,12 @@ from app.schemas import (
 )
 
 from app.supertokens_config import dot_env, app_info, supertokens_config
-from app.utils import article_exists, fetch_user_bookmarks, validate_objectid
+from app.utils import (
+    article_exists,
+    fetch_user_bookmarks,
+    validate_objectid,
+    is_user_password_valid,
+)
 
 
 # Supertokens
@@ -78,11 +83,8 @@ async def change_password(
     if users_info is None:
         raise HTTPException(status_code=400, detail=f"User info not found. Try again")
 
-    # check if old password is correct
-    is_password_valid = await sign_in(users_info.email, data.old_password)
-
-    if isinstance(is_password_valid, SignInWrongCredentialsErrorResult):
-        raise HTTPException(status_code=400, detail=f"Wrong old password")
+    if not await is_user_password_valid(users_info.email, data.old_password):
+        raise HTTPException(status_code=400, detail="Wrong old password")
 
     if data.old_password == data.new_password:
         raise HTTPException(
@@ -91,6 +93,7 @@ async def change_password(
         )
 
     status = await update_email_or_password(user_id, password=data.new_password)
+
     if status.is_ok:
         await session.revoke_session()
         return ChangePasswordResponseModel(msg="ok")
@@ -109,11 +112,8 @@ async def change_email(
     if users_info is None:
         raise HTTPException(status_code=400, detail=f"User info not found. Try again")
 
-    # check if old password is correct
-    is_password_valid = await sign_in(users_info.email, data.password)
-
-    if isinstance(is_password_valid, SignInWrongCredentialsErrorResult):
-        raise HTTPException(status_code=400, detail=f"Wrong password")
+    if not await is_user_password_valid(users_info.email, data.password):
+        raise HTTPException(status_code=400, detail="Wrong password")
 
     if data.new_email == users_info.email:
         raise HTTPException(
@@ -141,8 +141,6 @@ async def show_bookmarks(
     page_size: int = 10,
 ):
     user_id = session.get_user_id()
-    user_info = await get_user_by_id(user_id)
-    print(user_info.__dict__)
     item_count = await coll.count_documents({"user_id": user_id})
     offset = (page - 1) * page_size
 
