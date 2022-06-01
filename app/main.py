@@ -19,6 +19,8 @@ from supertokens_python.recipe.emailpassword.interfaces import (
 )
 
 from app.schemas import (
+    ChangeEmailRequestModel,
+    ChangeEmailResponseModel,
     ChangePasswordRequestModel,
     ChangePasswordResponseModel,
     CreateBookmarkModel,
@@ -70,29 +72,65 @@ async def change_password(
     data: ChangePasswordRequestModel,
     session: SessionContainer = Depends(verify_session()),
 ):
-    print(data)
     user_id = session.get_user_id()
     users_info = await get_user_by_id(user_id)
 
     if users_info is None:
-        raise HTTPException(status_code=500, detail=f"User info not found. Try again")
+        raise HTTPException(status_code=400, detail=f"User info not found. Try again")
 
     # check if old password is correct
     is_password_valid = await sign_in(users_info.email, data.old_password)
 
+    if isinstance(is_password_valid, SignInWrongCredentialsErrorResult):
+        raise HTTPException(status_code=400, detail=f"Wrong old password")
+
     if data.old_password == data.new_password:
         raise HTTPException(
-            status_code=500,
+            status_code=400,
             detail=f"New password cannot be the same as your old password",
         )
 
-    if isinstance(is_password_valid, SignInWrongCredentialsErrorResult):
-        raise HTTPException(status_code=500, detail=f"Wrong old password")
-
     status = await update_email_or_password(user_id, password=data.new_password)
-    await session.revoke_session()
+    if status.is_ok:
+        await session.revoke_session()
+        return ChangePasswordResponseModel(msg="ok")
 
-    return ChangePasswordResponseModel(msg="ok")
+    raise HTTPException(status_code=500, detail="Unknown error. Please try again")
+
+
+# Change email
+@f_app.post("/change_email", response_model=ChangeEmailResponseModel)
+async def change_email(
+    data: ChangeEmailRequestModel, session: SessionContainer = Depends(verify_session())
+):
+    user_id = session.get_user_id()
+    users_info = await get_user_by_id(user_id)
+
+    if users_info is None:
+        raise HTTPException(status_code=400, detail=f"User info not found. Try again")
+
+    # check if old password is correct
+    is_password_valid = await sign_in(users_info.email, data.password)
+
+    if isinstance(is_password_valid, SignInWrongCredentialsErrorResult):
+        raise HTTPException(status_code=400, detail=f"Wrong password")
+
+    if data.new_email == users_info.email:
+        raise HTTPException(
+            status_code=400,
+            detail=f"New email address cannot be the same as your old email address",
+        )
+
+    status = await update_email_or_password(user_id, email=data.new_email)
+
+    if status.is_ok:
+        await session.revoke_session()
+        return ChangeEmailResponseModel(msg="ok")
+
+    if status.is_email_already_exists_error:
+        raise HTTPException(status_code=400, detail=f"Email already exists")
+
+    raise HTTPException(status_code=500, detail="Unknown error. Please try again")
 
 
 # Bookmark post
@@ -103,6 +141,8 @@ async def show_bookmarks(
     page_size: int = 10,
 ):
     user_id = session.get_user_id()
+    user_info = await get_user_by_id(user_id)
+    print(user_info.__dict__)
     item_count = await coll.count_documents({"user_id": user_id})
     offset = (page - 1) * page_size
 
