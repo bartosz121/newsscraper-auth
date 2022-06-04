@@ -11,37 +11,37 @@ Docs for supertokens `EmailPassword` recipe available [here](https://app.swagger
 
 #### Change password
 
-```http
+```bash
   POST /change_password
 ```
 
 #### Change email
 
-```http
+```bash
   POST /change_email
 ```
 
 #### Get user list of bookmarks
 
-```http
+```bash
   GET /bookmark
 ```
 
 #### Add bookmark
 
-```http
+```bash
   POST /bookmark
 ```
 
 #### Delete bookmark
 
-```http
+```bash
   DELETE /bookmark
 ```
 
 #### Check if article is bookmarked by user
 
-```http
+```bash
   POST /bookmark/check
 ```
 
