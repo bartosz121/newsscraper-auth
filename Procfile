@@ -1,1 +1,1 @@
-web: uvicorn --app-dir app main:app
+web: uvicorn --app-dir app main:app --port=${PORT}
