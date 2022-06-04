@@ -51,6 +51,8 @@ To run this project, you will need to add the following environment variables to
 
 Get your own `APP_NAME`, `API_DOMAIN`, `API_KEY`, `WEBSITE_DOMAIN` and `CONNECTION_URI` from [supertokens](https://supertokens.com)
 
+If you are running this together with [newsscraper-frontend](https://github.com/bartosz121/newsscraper-frontend) - `WEBSITE_DOMAIN` should point to the frontend url
+
 ```bash
 APP_NAME=
 API_DOMAIN=
@@ -62,7 +64,7 @@ MONGO_DB_NAME=
 NEWSSCRAPER_API_URL=
 ```
 
-## Installation
+## Run Locally
 
 Clone the project
 
